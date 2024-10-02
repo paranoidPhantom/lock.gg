@@ -1,15 +1,3 @@
-# lock.gg
+# lock.gg - screen time for <img src="https://api.iconify.design/logos:microsoft-windows-icon.svg" width="40" height="20" alt="Windows">
 
-To install dependencies:
-
-```bash
-bun install
-```
-
-To run:
-
-```bash
-bun run index.ts
-```
-
-This project was created using `bun init` in bun v1.1.26. [Bun](https://bun.sh) is a fast all-in-one JavaScript runtime.
+### Built with [Bun](https://bun.sh)
