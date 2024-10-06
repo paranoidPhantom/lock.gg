@@ -118,6 +118,8 @@ export const dashboardOnNetwork = () => {
         }
     }
 
+    console.log(results);
+
     const interfaces = Object.keys(results);
 
     const primaryInterface = results[interfaces[0]];
