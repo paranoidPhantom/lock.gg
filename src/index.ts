@@ -118,7 +118,13 @@ export const dashboardOnNetwork = () => {
         }
     }
 
-    return `http://${results["en0"][0]}:${appConfig.port}`;
+    const interfaces = Object.keys(results);
+
+    const primaryInterface = results[interfaces[0]];
+
+    return `http://${
+        Array.isArray(primaryInterface) ? primaryInterface[0] : primaryInterface
+    }:${appConfig.port}`;
 };
 
 //_____________________________________________
@@ -134,7 +140,7 @@ export const validationJob = async () => {
         if (platform() === "win32")
             exec("rundll32.exe user32.dll,LockWorkStation");
     } else {
-        secondsLeft--;
+        secondsLeft -= 10;
         secondsLeft = secondsLeft < 0 ? 0 : secondsLeft;
         if (secondsLeft === 0) {
             systemOpen = false;
@@ -144,5 +150,5 @@ export const validationJob = async () => {
 
 //_____________________________________________
 
-setInterval(validationJob, 1000);
+setInterval(validationJob, 10000);
 console.warn(dashboardOnNetwork());
