@@ -140,46 +140,46 @@ import { platform } from "os";
 export const validationJob = async () => {
     if (!systemOpen) {
         if (platform() === "win32") {
-            // Use PowerShell to get information about all active user sessions
-            exec('powershell "query user"', (error, stdout, stderr) => {
-                if (error) {
-                    console.error(
-                        `Error querying user sessions: ${error.message}`
-                    );
-                    return;
-                }
-                if (stderr) {
-                    console.error(`stderr: ${stderr}`);
-                    return;
-                }
-
-                // Parse the output of 'query user' to get session IDs
-                const lines = stdout.trim().split("\n").slice(1); // Remove header line
-                const currentSession = process.env["SESSIONNAME"]; // Current session name
-
-                lines.forEach((line) => {
-                    const parts = line.trim().split(/\s+/); // Split by whitespace
-                    const sessionId = parts[2]; // Session ID is the third part of the line
-                    const sessionName = parts[1]; // Session name is the second part
-                    const sessionUser = parts[0]; // Username is the first part
-
-                    // Skip locking the current session
-                    if (sessionName !== currentSession) {
-                        console.log(
-                            `Locking session for user: ${sessionUser}, Session ID: ${sessionId}`
+            // Use PowerShell to get active user sessions
+            exec(
+                'powershell "Get-WmiObject -Class Win32_LogonSession | Where-Object { $_.LogonType -eq 2 } | ForEach-Object { $_.LogonId }"',
+                (error, stdout, stderr) => {
+                    if (error) {
+                        console.error(
+                            `Error querying user sessions: ${error.message}`
                         );
-
-                        // Lock other user sessions using 'tsdiscon'
-                        exec(`tsdiscon ${sessionId}`, (err, stdout, stderr) => {
-                            if (err) {
-                                console.error(
-                                    `Error disconnecting session ${sessionId}: ${err.message}`
-                                );
-                            }
-                        });
+                        return;
                     }
-                });
-            });
+                    if (stderr) {
+                        console.error(`stderr: ${stderr}`);
+                        return;
+                    }
+
+                    const sessionIds = stdout.trim().split("\n");
+                    const currentSession = process.env["SESSIONNAME"]; // Get the current session name
+
+                    sessionIds.forEach((sessionId) => {
+                        sessionId = sessionId.trim();
+
+                        // Skip locking the current session
+                        if (sessionId !== currentSession) {
+                            console.log(`Locking session: ${sessionId}`);
+
+                            // Lock other user sessions using 'tsdiscon'
+                            exec(
+                                `tsdiscon ${sessionId}`,
+                                (err, stdout, stderr) => {
+                                    if (err) {
+                                        console.error(
+                                            `Error disconnecting session ${sessionId}: ${err.message}`
+                                        );
+                                    }
+                                }
+                            );
+                        }
+                    });
+                }
+            );
         }
     } else {
         secondsLeft -= 10;
