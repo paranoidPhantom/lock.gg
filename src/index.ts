@@ -140,9 +140,9 @@ import { platform } from "os";
 export const validationJob = async () => {
     if (!systemOpen) {
         if (platform() === "win32") {
-            // Use PowerShell to get active user sessions
+            // Use PowerShell to get user sessions
             exec(
-                'powershell "Get-WmiObject -Class Win32_LogonSession | Where-Object { $_.LogonType -eq 2 } | ForEach-Object { $_.LogonId }"',
+                'powershell "Get-WmiObject -Class Win32_Session | Where-Object { $_.SessionType -eq 2 }"',
                 (error, stdout, stderr) => {
                     if (error) {
                         console.error(
@@ -155,23 +155,27 @@ export const validationJob = async () => {
                         return;
                     }
 
-                    const sessionIds = stdout.trim().split("\n");
                     const currentSession = process.env["SESSIONNAME"]; // Get the current session name
+                    const sessions = stdout.trim().split("\n").slice(2); // Skip headers
 
-                    sessionIds.forEach((sessionId) => {
-                        sessionId = sessionId.trim();
+                    sessions.forEach((session) => {
+                        const parts = session.trim().split(/\s+/);
+                        const sessionId = parts[0]; // Session ID
+                        const sessionUser = parts[1]; // User name
 
-                        // Skip locking the current session
-                        if (sessionId !== currentSession) {
-                            console.log(`Locking session: ${sessionId}`);
+                        // Skip logging off the current session
+                        if (sessionUser !== currentSession) {
+                            console.log(
+                                `Logging off session for user: ${sessionUser}, Session ID: ${sessionId}`
+                            );
 
-                            // Lock other user sessions using 'tsdiscon'
+                            // Log off other user sessions using 'logoff'
                             exec(
-                                `tsdiscon ${sessionId}`,
+                                `powershell logoff ${sessionId}`,
                                 (err, stdout, stderr) => {
                                     if (err) {
                                         console.error(
-                                            `Error disconnecting session ${sessionId}: ${err.message}`
+                                            `Error logging off session ${sessionId}: ${err.message}`
                                         );
                                     }
                                 }
